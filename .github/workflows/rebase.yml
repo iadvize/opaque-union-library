@@ -18,7 +18,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN_REPO_WRITE }}
+        token: ${{ secrets.TOKEN_REPO_WRITE }}
 
     - name: 'Rebase one pull request based on master with label'
       uses: iadvize/actions/rebase-pull-requests@5598823e476f2c2a6c2aa8b13e776708dcb68ec3
@@ -27,7 +27,7 @@ jobs:
         # because an action in a workflow run can't trigger a new workflow run
         # with the GITHUB_TOKEN
         # @see https://help.github.com/en/articles/events-that-trigger-workflows#event-restrictions
-        token: ${{ secrets.GITHUB_TOKEN_REPO_WRITE }}
+        token: ${{ secrets.TOKEN_REPO_WRITE }}
         label: 'Action: keep-rebased-then-merge'
         onlyOnce: true
 
