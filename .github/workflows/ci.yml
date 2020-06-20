@@ -13,14 +13,14 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-    - uses: actions/checkout@v2-beta
+    - uses: actions/checkout@v2
 
     - uses: actions/setup-node@v1
       with:
         node-verion: '12.x'
 
     - name: Cache npm cache
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ~/.npm
         key: v1-npm-${{ github.ref }}-${{ hashFiles('package-lock.json') }}
@@ -30,7 +30,7 @@ jobs:
 
     - name: Restore node_modules
       id: node-modules-cache
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: node_modules
         key: v1-node-modules-${{ github.ref }}-${{ hashFiles('package-lock.json') }}
@@ -47,14 +47,14 @@ jobs:
       - install
 
     steps:
-    - uses: actions/checkout@v2-beta
+    - uses: actions/checkout@v2
 
     - uses: actions/setup-node@v1
       with:
         node-verion: '12.x'
 
     - name: Restore node_modules
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       id: node-modules-cache
       with:
         path: node_modules
@@ -71,14 +71,14 @@ jobs:
       - install
 
     steps:
-    - uses: actions/checkout@v2-beta
+    - uses: actions/checkout@v2
 
     - uses: actions/setup-node@v1
       with:
         node-verion: '12.x'
 
     - name: Restore node_modules
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       id: node-modules-cache
       with:
         path: node_modules
@@ -95,14 +95,14 @@ jobs:
       - install
 
     steps:
-    - uses: actions/checkout@v2-beta
+    - uses: actions/checkout@v2
 
     - uses: actions/setup-node@v1
       with:
         node-verion: '12.x'
 
     - name: Restore node_modules
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       id: node-modules-cache
       with:
         path: node_modules

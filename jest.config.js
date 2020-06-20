@@ -4,7 +4,7 @@ module.exports = {
   testRegex: ['.*\\.test\\.[jt]sx?$'],
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
-    '^.+\\.jsx?$': 'babel-jest',
+    '^.+\\.jsx?$': 'ts-jest',
   },
   globals: {
     'ts-jest': {

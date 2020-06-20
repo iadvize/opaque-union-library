@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - name: Update deployment status
-      uses: actions/github-script@0.4.0
+      uses: actions/github-script@v2
       env:
         DEPLOYMENT_ID: ${{ github.event.deployment.id }}
       with:
@@ -31,7 +31,7 @@ jobs:
           });
 
     - name: Checkout code
-      uses: actions/checkout@master
+      uses: actions/checkout@v2
       with:
         ref: ${{ github.event.deployment.payload.ref }}
 
@@ -65,7 +65,7 @@ jobs:
 
     - name: Update deployment status
       if: always()
-      uses: actions/github-script@0.4.0
+      uses: actions/github-script@v2
       env:
         DEPLOYMENT_ID: ${{ github.event.deployment.id }}
         PUBLISH_STATE: ${{ steps.publish.outputs.state }}
