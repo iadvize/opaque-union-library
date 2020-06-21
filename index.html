@@ -1,0 +1,373 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>@iadvize-oss/opaque-union - v0.0.0</title>
+	<meta name="description" content="Documentation for @iadvize-oss/opaque-union - v0.0.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.json" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">@iadvize-oss/opaque-union - v0.0.0</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+			</ul>
+			<h1>@iadvize-oss/opaque-union - v0.0.0</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<a href="#iadvize-ossopaque-union-library" id="iadvize-ossopaque-union-library" style="color: inherit; text-decoration: none;">
+					<h1>@iadvize-oss/opaque-union library</h1>
+				</a>
+				<p><img src="https://github.com/iadvize/opaque-union-library/workflows/Continuous%20integration/badge.svg" alt="Continuous integration"></p>
+				<p>This library provides helpers to create and maintain opaque domain sumtypes in
+				Typescript.</p>
+				<p>Inspired by <a href="https://github.com/sledorze/morphic-ts/">https://github.com/sledorze/morphic-ts/</a> and
+				<a href="https://github.com/iadvize/opaque-type-library/">https://github.com/iadvize/opaque-type-library/</a>.</p>
+				<a href="#example" id="example" style="color: inherit; text-decoration: none;">
+					<h1>Example</h1>
+				</a>
+				<p>Let&#39;s say your app deals with messages: </p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
+
+<span class="hljs-keyword">type</span> $Text = {
+  author: <span class="hljs-built_in">string</span>;
+  content: <span class="hljs-built_in">string</span>;
+}
+
+<span class="hljs-keyword">type</span> $Image = {
+  author: <span class="hljs-built_in">string</span>;
+  source: <span class="hljs-built_in">string</span>;
+  description: <span class="hljs-built_in">string</span>;
+  mimetype: <span class="hljs-string">&#x27;jpeg&#x27;</span> | <span class="hljs-string">&#x27;png&#x27;</span>,
+}
+
+<span class="hljs-keyword">type</span> $Video = {
+  author: <span class="hljs-built_in">string</span>;
+  source: <span class="hljs-built_in">string</span>;
+  description: <span class="hljs-built_in">string</span>;
+  autoplay: <span class="hljs-built_in">boolean</span>;
+}
+
+<span class="hljs-keyword">type</span> $Message = $Text | $Image | $Video;</code></pre>
+				<p>These are your private types (we like to prefix them with <code>$</code>). You don&#39;t want
+					to expose them directly. You want to make them <em>opaque</em> for the rest of your app
+				and expose an API to use them.</p>
+				<p>Let&#39;s create the opaque union helper:</p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
+
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Union <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@iadvize-oss/opaque-union&#x27;</span>;
+
+<span class="hljs-keyword">const</span> MessageAPI = Union.of({
+  Text: Union.type&lt;$Text&gt;(),
+  Image: Union.type&lt;$Image&gt;(),
+  Video: Union.type&lt;$Video&gt;(),
+});
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">type</span> Text = ReturnType&lt;<span class="hljs-keyword">typeof</span> MessageAPI.of.Text&gt;; <span class="hljs-comment">// Union.Opaque&lt;&#x27;Text&#x27;&gt;</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">type</span> Image = ReturnType&lt;<span class="hljs-keyword">typeof</span> MessageAPI.of.Image&gt;;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">type</span> Video = ReturnType&lt;<span class="hljs-keyword">typeof</span> MessageAPI.of.Video&gt;;
+
+<span class="hljs-comment">// this is a union of each opaque type</span>
+<span class="hljs-comment">// ie. Text | Image | Video</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">type</span> Message = Union.Type&lt;<span class="hljs-keyword">typeof</span> MessageAPI&gt;;</code></pre>
+				<p>An helper for media messages only will also be helpful.</p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
+
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Union <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@iadvize-oss/opaque-union&#x27;</span>;
+
+<span class="hljs-keyword">const</span> MediaMessageAPI = Union.omit(MessageAPI, [<span class="hljs-string">&#x27;Text&#x27;</span>]);</code></pre>
+				<p>You can now easily create the API you want your module to expose.</p>
+				<p>First, constructors:</p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> createText = MessageAPI.of.Text; <span class="hljs-comment">// (props: $Text) =&gt; Union.Opaque&lt;&#x27;Text&#x27;&gt;</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> createImage = MessageAPI.of.Image;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> createVideo = MessageAPI.of.Video;
+</code></pre>
+				<p>To be used somewhere else in your app like that:</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Message <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/message.ts&#x27;</span>;
+
+<span class="hljs-keyword">const</span> textMessage = Message.createText({ <span class="hljs-comment">// textMessage is opaque</span>
+  author: <span class="hljs-string">&#x27;Jean&#x27;</span>,
+  content: <span class="hljs-string">&#x27;Hello world!&#x27;</span>,
+});
+
+<span class="hljs-keyword">const</span> imageMessage = Message.createImage({
+  author: <span class="hljs-string">&#x27;Peter&#x27;</span>,
+  source: <span class="hljs-string">&#x27;http://...&#x27;</span>,
+  description: <span class="hljs-string">&#x27;A goat&#x27;</span>,
+  mimetype: <span class="hljs-string">&#x27;jpeg&#x27;</span>,
+});</code></pre>
+				<p>We can&#39;t work directly on the opaque <code>textMessage</code> or <code>imageMessage</code> variables
+				because we can&#39;t see what&#39;s inside.</p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// Error: Property &#x27;author&#x27; does not exist on type &#x27;Opaque&lt;&quot;Text&quot;&gt;&#x27;.</span>
+textMessage.author</code></pre>
+				<p>You&#39;re safe. Only <code>MessageAPI</code> knows how to &quot;unopaque&quot; these variables and work
+				on their content. It&#39;s best to keep the API private to your <code>message.ts</code> module.</p>
+				<p>To help you do just that, you can write properties accessors easily:</p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> author = MessageAPI.lensFromProp(<span class="hljs-string">&#x27;author&#x27;</span>).get;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> content = MessageAPI.Text.lensFromProp(<span class="hljs-string">&#x27;content&#x27;</span>).get;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> source = MediaMessageAPI.lensFromProp(<span class="hljs-string">&#x27;source&#x27;</span>).get;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> description = MediaMessageAPI.lensFromProp(<span class="hljs-string">&#x27;description&#x27;</span>).get;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> mimetype = MessageAPI.Image.lensFromProp(<span class="hljs-string">&#x27;mimetype&#x27;</span>).get;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> autoplay = MessageAPI.Video.lensFromProp(<span class="hljs-string">&#x27;autoplay&#x27;</span>).get;</code></pre>
+				<p>To be used in another file like this: </p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Message <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/message.ts&#x27;</span>;
+
+<span class="hljs-keyword">const</span> textContent = Message.content(textMessage);
+<span class="hljs-keyword">const</span> imageDescription = Message.description(imageMessage);</code></pre>
+				<p>You can create more powerful and time saving compound accessors as well:</p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> summary = MessageAPI.fold({
+  Text: <span class="hljs-function"><span class="hljs-params">text</span> =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${author(text)}</span> send &quot;<span class="hljs-subst">${content(text)}</span>&quot;`</span>,
+  Image: <span class="hljs-function"><span class="hljs-params">image</span> =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${author(image)}</span> send a <span class="hljs-subst">${mimetype(image)}</span> image &quot;<span class="hljs-subst">${description(image)}</span>&quot;`</span>,
+  Video: <span class="hljs-function"><span class="hljs-params">video</span> =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${author(video)}</span> send a video &quot;<span class="hljs-subst">${description(video)}</span>&quot;`</span>,
+});</code></pre>
+				<p>To be used for example like that: </p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Message <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/message.ts&#x27;</span>;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">log</span>(<span class="hljs-params">message: Message.Message</span>) </span>{
+  <span class="hljs-built_in">console</span>.log(Message.summary(message));
+}</code></pre>
+				<p>You can write transformations:</p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> addSignature = <span class="hljs-function">(<span class="hljs-params">signature: <span class="hljs-built_in">string</span></span>) =&gt;</span> MessageAPI.Text.iso.modify(
+  $text =&gt; ({ ...$text, content: <span class="hljs-string">`<span class="hljs-subst">${$text.content}</span>\n<span class="hljs-subst">${signature}</span>`</span> })
+);</code></pre>
+				<p>It&#39;s very composable. For example here with
+				<a href="https://gcanti.github.io/fp-ts/modules/">fp-ts</a> <code>pipe</code> function:</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { pipe } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;fp-ts/es6/function&#x27;</span>;
+<span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Message <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/message.ts&#x27;</span>;
+
+<span class="hljs-keyword">const</span> signature = <span class="hljs-string">&#x27;Jean (jean@email.com)&#x27;</span>;
+
+<span class="hljs-keyword">const</span> textMessageWithSignature = pipe(
+  Message.createText(...),
+  Message.addSignature(signature),
+);</code></pre>
+				<p>And finally, the classic helpers you&#39;ve come to expect come bundled in:</p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> isText = MessageAPI.is.Text;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> fold = MessageAPI.fold;</code></pre>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Message <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/message.ts&#x27;</span>;
+
+<span class="hljs-keyword">if</span> (Message.isText(message)) {
+  <span class="hljs-keyword">return</span> &lt;TextMessage message={message}&gt;
+} <span class="hljs-keyword">else</span> {
+  <span class="hljs-keyword">return</span> &lt;UnsupportedMessage &gt;
+}
+
+<span class="hljs-comment">// or</span>
+
+<span class="hljs-keyword">return</span> pipe(
+  message,
+  Message.fold({
+    Text: <span class="hljs-function"><span class="hljs-params">text</span> =&gt;</span> &lt;TextMessage message={text} /&gt;,
+    Image: <span class="hljs-function">() =&gt;</span> &lt;UnsupportedMessage /&gt;,
+    Video: <span class="hljs-function">() =&gt;</span> &lt;UnsupportedMessage /&gt;,
+  }),
+);</code></pre>
+				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
+					<h1>Usage</h1>
+				</a>
+				<pre><code>npm add @iadvize-oss/opaque-<span class="hljs-class"><span class="hljs-keyword">union</span></span></code></pre>
+				<a href="#documentation" id="documentation" style="color: inherit; text-decoration: none;">
+					<h1>Documentation</h1>
+				</a>
+				<p><a href="https://iadvize.github.io/opaque-union-library/">📖 Documentation</a></p>
+				<a href="#optics" id="optics" style="color: inherit; text-decoration: none;">
+					<h1>Optics</h1>
+				</a>
+				<p>The union API exposes some <a href="https://github.com/gcanti/monocle-ts">monocle-ts</a>
+				optics:</p>
+				<a href="#iso" id="iso" style="color: inherit; text-decoration: none;">
+					<h2><code>Iso</code></h2>
+				</a>
+				<p>An <code>Iso</code> is a tool to transform between two types without any loss. In our case:</p>
+				<pre><code>  Opaque&lt;Key&gt; ---&gt;<span class="hljs-built_in"> Type </span>(get, <span class="hljs-keyword">from</span>, unwrap)
+  Opaque&lt;Key&gt; &lt;---<span class="hljs-built_in"> Type </span>(reverseGet, <span class="hljs-keyword">to</span>, wrap)</code></pre><p>It&#39;s particulary useful to transform the private value inside the opaque but you
+					can also combine it with other
+				<a href="https://github.com/gcanti/monocle-ts">monocle-ts</a> optics. </p>
+				<p>Use <code>&lt;API&gt;.&lt;Type&gt;.iso</code> to have full control over one type and its corresponding
+				opaque type.</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">const</span> iso = MessageAPI.Text.iso; <span class="hljs-comment">// Iso&lt;Opaque&lt;Type&gt;, Type&gt;</span>
+
+<span class="hljs-keyword">const</span> fromOpaque: <span class="hljs-function">(<span class="hljs-params">text: Text</span>) =&gt;</span> $Text = iso.from;
+<span class="hljs-keyword">const</span> toOpaque: <span class="hljs-function">(<span class="hljs-params">$text: $Text</span>) =&gt;</span> Text = iso.to;</code></pre>
+				<p>To be used like this, when you need to &quot;unopaque&quot; your type in a private module
+				function, for example:</p>
+				<pre><code class="language-typescript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">translate</span>(<span class="hljs-params">textMessage: Text</span>): <span class="hljs-title">Text</span> </span>{
+  <span class="hljs-keyword">const</span> privateContent = fromOpaque(
+    textMessage, <span class="hljs-comment">// this is an Opaque&lt;&#x27;Text&#x27;&gt;</span>
+  ); <span class="hljs-comment">// &quot;hello world&quot;</span>
+
+  <span class="hljs-keyword">const</span> translation = translateText(privateContent); <span class="hljs-comment">// some magic here</span>
+
+  <span class="hljs-keyword">const</span> opaqueTextMessageAgain = toOpaque(
+    translation, <span class="hljs-comment">// this is a $Text</span>
+  ); <span class="hljs-comment">// Opaque&lt;&#x27;Text&#x27;&gt;</span>
+
+  <span class="hljs-keyword">return</span> opaqueTextMessageAgain
+}</code></pre>
+				<p>You can also use the <code>Iso</code> directly for transformations:</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">const</span> iso = MessageAPI.Text.iso; <span class="hljs-comment">// Iso&lt;Opaque&lt;Type&gt;, Type&gt;</span>
+
+<span class="hljs-keyword">const</span> addSignature = <span class="hljs-function">(<span class="hljs-params">signature: <span class="hljs-built_in">string</span></span>) =&gt;</span> iso.modify(
+  <span class="hljs-comment">// you have access to the private type here</span>
+  $text =&gt; <span class="hljs-string">`<span class="hljs-subst">${$text}</span>\n<span class="hljs-subst">${signature}</span>`</span>,
+);</code></pre>
+				<p>To be used like this:</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">const</span> textMessage: Text = ...;
+
+<span class="hljs-keyword">const</span> textMessageWithSignature = addSignature(<span class="hljs-string">&#x27;Jean (jean@email.com)&#x27;</span>)(textMessage);</code></pre>
+				<p>There is also a global <code>Iso</code> exposed on <code>&lt;API&gt;.iso</code> to switch between any opaque
+				and any private types. </p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">const</span> iso: Iso&lt;
+  Message, <span class="hljs-comment">// the opaque union</span>
+  Union.Tagged&lt;$Computer, <span class="hljs-string">&#x27;Computer&#x27;</span>&gt; | Union.Tagged&lt;$Smartphone, <span class="hljs-string">&#x27;Smartphone&#x27;</span>&gt; | Union.Tagged&lt;$Smartphone, <span class="hljs-string">&#x27;Smartphone&#x27;</span>&gt;
+&gt; = MessageAPI.iso;</code></pre>
+				<p>Where <code>type Tagged&lt;T, Name&gt; = T &amp; { _key: Name }</code> is used to not lose the type
+					of the entity when switching from an opaque to the corresponding private type.
+					That&#39;s why the global <code>.iso</code> is restricted to members of the union that are
+				assignabled to <code>object</code>.</p>
+				<a href="#lensfromprop" id="lensfromprop" style="color: inherit; text-decoration: none;">
+					<h2><code>lensFromProp</code></h2>
+				</a>
+				<p>A <a href="https://github.com/gcanti/monocle-ts">monocle-ts</a> <code>Lens</code> is a tool to
+				transform between a type and a subtype of it.</p>
+				<p>Use the global <code>&lt;API&gt;.lensFromProp</code> to create a <code>Lens</code> between any opaque of the
+				API and a property shared by all private types of the API (if any).</p>
+				<p>In your module:</p>
+				<pre><code class="language-typescript"><span class="hljs-comment">// media.ts</span>
+<span class="hljs-keyword">type</span> $Image = {
+  source: <span class="hljs-built_in">string</span>;
+}
+
+<span class="hljs-keyword">type</span> $Video = {
+  source: <span class="hljs-built_in">string</span>;
+  autoplay: <span class="hljs-built_in">boolean</span>;
+}
+
+<span class="hljs-keyword">const</span> MediaAPI = Union.of({
+  Image: Union.type&lt;$Image&gt;(),
+  Video: Union.type&lt;$Video&gt;(),
+});
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> createImage = MessageAPI.of.Image;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> createVideo = MessageAPI.of.Video;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> source = MediaAPI.lensFromProp(<span class="hljs-string">&#x27;source&#x27;</span>).get;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> updateSource = MediaAPI.lensFromProp(<span class="hljs-string">&#x27;source&#x27;</span>).modify;</code></pre>
+				<p>Somewhere else in your app:</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Media <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/media.ts&#x27;</span>;
+
+<span class="hljs-keyword">const</span> image = Media.createImage({ source: <span class="hljs-string">&#x27;http://a.com/b.jpeg &#x27;</span> });
+
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;source: &#x27;</span>, source(image)); <span class="hljs-comment">// http://a.com/b.jpeg</span>
+
+<span class="hljs-keyword">const</span> newImage = Media.updateSource(
+  <span class="hljs-function"><span class="hljs-params">oldSource</span> =&gt;</span> oldSource.replace(<span class="hljs-string">&#x27;a.com&#x27;</span>, <span class="hljs-string">&#x27;static.a.com&#x27;</span>)
+)(image);</code></pre>
+				<p>Use <code>&lt;API&gt;.&lt;Type&gt;.lensFromProp</code> to create an <code>Lens&lt;Opaque&lt;Type&gt;, Type[...]</code>.</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">const</span> videoMessage: Video = ...;
+
+<span class="hljs-keyword">const</span> autoplay = MediaAPI.Video.lensFromProp(<span class="hljs-string">&#x27;autoplay&#x27;</span>).get;
+<span class="hljs-keyword">const</span> removeAutoPlay = MediaAPI.Video.lensFromProp(<span class="hljs-string">&#x27;autoplay&#x27;</span>).set(<span class="hljs-literal">false</span>);</code></pre>
+				<p>Somewhere else in your app:</p>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Media <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/media.ts&#x27;</span>;
+
+<span class="hljs-keyword">const</span> video = Media.createImage({ source: <span class="hljs-string">&#x27;http://a.com/b.jpeg &#x27;</span>, autoplay: <span class="hljs-literal">true</span> });
+
+<span class="hljs-keyword">const</span> videoWithoutAutoplay = Media.removeAutoPlay(video);</code></pre>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class=" tsd-kind-module">
+						<a href="globals.html">&quot;index&quot;</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>
