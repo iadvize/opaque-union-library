@@ -2,8 +2,8 @@
 =============================
 ![Continuous integration](https://github.com/iadvize/opaque-union-library/workflows/Continuous%20integration/badge.svg)
 
-This library provides helpers to create and maintain opaque domain sumtypes in
-Typescript.
+This experimental library provides helpers to create and maintain opaque domain
+sumtypes in Typescript.
 
 Inspired by https://github.com/sledorze/morphic-ts/ and
 https://github.com/iadvize/opaque-type-library/.
