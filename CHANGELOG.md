@@ -7,5 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- first commit
+
 [Unreleased]: https://github.com/iadvize/opaque-union-library/compare/HEAD...HEAD
 

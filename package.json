@@ -42,8 +42,13 @@
     "rollup-plugin-terser": "^6.1.0",
     "rollup-plugin-typescript2": "^0.27.1",
     "ts-jest": "^26.1.0",
+    "tsd": "^0.11.0",
     "tslib": "^2.0.0",
     "typedoc": "^0.17.7",
     "typescript": "^3.9.5"
+  },
+  "dependencies": {
+    "@iadvize-oss/foldable-helpers": "^1.0.5",
+    "monocle-ts": "^2.2.0"
   }
 }
