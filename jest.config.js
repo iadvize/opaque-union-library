@@ -6,11 +6,6 @@ module.exports = {
     '^.+\\.tsx?$': 'ts-jest',
     '^.+\\.jsx?$': 'ts-jest',
   },
-  globals: {
-    'ts-jest': {
-      isolatedModules: true,
-    },
-  },
   clearMocks: true,
   coverageThreshold: {
     global: {
