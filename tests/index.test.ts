@@ -23,7 +23,9 @@ describe('packages', () => {
           Two: Union.type<Two>(),
         });
 
-        expectType<Union.Def<{ One: One; Two: Two }, 'One' | 'Two'>>(UnionAPI);
+        expectType<Union.UnionAPIDef<{ One: One; Two: Two }, 'One' | 'Two'>>(
+          UnionAPI,
+        );
 
         expect(Object.keys(UnionAPI.types)).toEqual(['One', 'Two']);
       });
@@ -48,7 +50,7 @@ describe('packages', () => {
         const Union3 = Union.merge(UnionAPI1, UnionAPI2);
 
         expectType<
-          Union.Def<
+          Union.UnionAPIDef<
             { One: One; Two: Two; Three: Three },
             'One' | 'Two' | 'Three'
           >
