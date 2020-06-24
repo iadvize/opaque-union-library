@@ -219,7 +219,40 @@ return pipe(
 );
 ```
 
-# Usage
+# Advanced example
+
+What if any Message should be either `Pending` or `Sent`? This is what is called
+"variation" in the library.
+
+```typescript
+// message.ts
+
+import * as Union from '@iadvize-oss/opaque-union';
+
+const MessageAPI = Union.ofVariations({
+  Text: {
+    Pending: Union.type<$Text>(),
+    Sent: Union.type<$Text>(),
+  },
+  Image: {
+    Pending: Union.type<$Image>(),
+    Sent: Union.type<$Image>(),
+  },
+});
+
+const pendingTextMessage = MessageAPI.of.Text.Pending({ ... });
+```
+
+Using variations you can model your entities with a table, like below, while
+still using all the library union helpers.
+
+|         | Text | Image |
+|---------|------|-------|
+| Pending |      |       |
+| Sent    |      |       |
+
+
+# Install
 
 ```
 npm add @iadvize-oss/opaque-union
