@@ -36,7 +36,6 @@
     "@rollup/plugin-commonjs": "^16.0.0",
     "@types/jest": "^26.0.15",
     "eslint": "^7.14.0",
-    "fp-ts": "^2.9.0",
     "jest": "^26.6.3",
     "rollup": "^2.33.3",
     "rollup-plugin-multi-input": "^1.1.1",

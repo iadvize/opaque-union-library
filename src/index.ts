@@ -4,15 +4,16 @@ import { createFoldObject } from '@iadvize-oss/foldable-helpers';
 
 /**
  * All opaque variables you create with the library will have the type of
- * `Opaque<'SomeName'>`.
+ * `Opaque<'SomeName', 'SomeVariation>`.
  *
  * @remarks
- * You can't really do anything with it.  So, don't try to use them directly!
+ * You can't really do anything with it. So, don't try to use them directly!
  * Use the library functions instead.
  *
- * @typeParam Key - The name of the opaque
+ * @typeParam Name - The name of the opaque
+ * @typeParam Variation - The variation of the opaque
  */
-export type Opaque<Key> = {
+export type Opaque<Name, Variation> = {
   /**
    * @internal
    */
@@ -23,7 +24,14 @@ export type Opaque<Key> = {
    *
    * @internal
    */
-  readonly __OPAQUE_KEY__: Key;
+  readonly __OPAQUE_KEY__: Name;
+
+  /**
+   * Where the variation is stored.
+   *
+   * @internal
+   */
+  readonly __OPAQUE_VARIATION__: Variation;
 
   /**
    * Where the private value is stored
@@ -33,6 +41,21 @@ export type Opaque<Key> = {
   readonly value: unknown;
 };
 
+type PossibleNames = string | number | symbol;
+type PossibleVariations = string | number | symbol;
+
+/**
+ * Mapped type to store Opaques by name and variation
+ */
+export type Opaques<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations
+> = {
+  [name in Names]: {
+    [variation in Variations]: Opaque<name, variation>;
+  }[Variations];
+}[Names];
+
 /**
  * To be used only in the context of {@link of | Union.of} to attach private
  * type to the corresponding name in the union.
@@ -41,86 +64,304 @@ export type Opaque<Key> = {
 ```typescript
   import * as Union from '@iadvize-oss/opaque-union';
 
-  const UnionAPI = Union.of({
-      Text: Union.type<$Text>(),
-      Image: Union.type<$Image>(),
+  const MessageAPI = Union.of({
+    Text: Union.type<$Text>(),
+    Image: Union.type<$Image>(),
   });
 ```
  *
  * @typeParam T - The private type to assign to the corresponding name
  *
- * @returns Actually it's `null`. Do not rely on it. Used for type only.
+ * @returns Something. Do not rely on it. Used internaly only.
  */
 export function type<T>(): T {
-  return (null as unknown) as T;
+  return (undefined as unknown) as T;
 }
 
 /**
- * Helper type to extract from T the keys that have non-object values
+ * Fold functions definition. A kind of pattern matching for unions created with
+ * the library.
  *
- * @typeParam T - The type to extract keys that have non-object values from
- *
- * @internal
- */
-type SubtractKeysForNonObject<T> = {
-  [K in keyof T]: T[K] extends object ? K : never;
-}[keyof T & string];
-
-/**
- * Helper type to add a prop `_tag` on T
- *
- * @typeParam T - The type to decorate
- * @typeParam Key - The name to give the type
- */
-export type Tagged<T, Key> = T & {
-  _tag: Key;
-};
-
-/**
- * Mapped type to store `Tagged` types
- *
- * @internal
- *
- * @typeParam Types - Collection of private types of the union
- * @typeParam Keys - Keys of `Types` to map over
- */
-type TaggedTypes<Types, Keys extends keyof Types & string> = {
-  [key in Keys]: Tagged<Types[key], key>;
-};
-
-/**
- * Mapped type to store `Opaque` types
- *
- * @internal
- *
- * @typeParam Types - Collection of private types of the union
- * @typeParam Keys - Keys of `Types` to map over
- */
-type Opaques<Types, Keys extends keyof Types & string> = {
-  [key in Keys]: Opaque<key>;
-};
-
-/**
- * Constructors for opaque types
- *
+ * @example
 ```typescript
   import * as Union from '@iadvize-oss/opaque-union';
 
-  type $Text = { content: string };
-
-  const UnionAPI = Union.of({
+  const MessageAPI = Union.of({
     Text: Union.type<$Text>(),
     Image: Union.type<$Image>(),
   });
 
-  const text = Union.of.Text({ content: 'hello world' });
+  type Text = ReturnType<typeof MessageAPI.of.Text>;
+  type Image = ReturnType<typeof MessageAPI.of.Image>;
+
+  MessageAPI.fold({
+    Test: (message: Text) => 'text',
+    Image: (message: Image) => 'image',
+  })
+```
+ *
+ * @example
+```typescript
+  import * as Union from '@iadvize-oss/opaque-union';
+
+  const MessageAPI = Union.ofVariations({
+    Text: {
+      Sent: Union.type<$Text>(),
+      Pending: Union.type<$Text>(),
+    },
+    Image: {
+      Sent: Union.type<$Image>(),
+      Pending: Union.type<$Image>(),
+    },
+  });
+
+  const MessageSentAPI = Union.omitVariations(['Pending']);
+  type MessageSent = Union.Type<typeof MessageSentAPI>;
+
+  type TextSent = ReturnType<typeof MessageAPI.of.Text.Sent>;
+  type ImageSent = ReturnType<typeof MessageAPI.of.Image.Sent>;
+
+  MessageAPI.fold<string, MessageSent>({
+    Test: (message: TextSent) => 'text',
+    Image: (message: ImageSent) => 'image',
+  })
+```
+ * *
+ * @internal
+ */
+type Fold<Types> = {
+  /**
+   * Basic definition: each function we provide for subtype take the full
+   * subtype
+   */
+  <R>(
+    funcs: {
+      [key in keyof Types]: (s: Types[key]) => R;
+    },
+  ): (s: Types[keyof Types]) => R;
+
+  /**
+   * Extended definition: we can filter the types we fold on, specialy usefull
+   * when we want to exclude some variations
+   */
+  <R, S extends Types[keyof Types]>(
+    funcs: {
+      [key in keyof Types]: (s: Extract<S, Types[key]>) => R;
+    },
+  ): (s: S) => R;
+};
+
+/**
+ * Helper to type lensFromProp functions
+ *
+ * @internal
+ */
+type LensFromProp<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = {
+  /**
+   * Basic definition: we work on the full Opaques\<Names, Variations\>
+   */
+  <Prop extends keyof Types[Names][Variations]>(prop: Prop): Lens<
+    Opaques<Names, Variations>,
+    Types[Names][Variations][Prop]
+  >;
+
+  /**
+   * Exctended definition: we work on a subtype of Opaques\<Names, Variations\>
+   */
+  <
+    C extends Opaques<Names, Variations>,
+    Prop extends keyof Types[Names][Variations]
+  >(
+    prop: Prop,
+  ): Lens<C, Types[Names][Variations][Prop]>;
+};
+
+/**
+ * Helper type to add a prop `_tag` on T
+ * Usefull for ISO
+ *
+ * @typeParam T - The type to decorate
+ * @typeParam Key - The name to give the type
+ * @typeParam Variations - The variations
+ */
+export type Tagged<
+  Name extends PossibleNames,
+  Variation extends PossibleVariations,
+  Type
+> = Type & {
+  readonly _tag: Name;
+  readonly _variation: Variation;
+};
+
+/**
+ * Mapped type to store `Tagged` types
+ * Usefull for ISO
+ *
+ * @internal
+ *
+ * @typeParam Types - Collection of private types of the union
+ * @typeParam Keys - Keys of `Types` to map over
+ */
+type TaggedTypes<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = {
+  [name in Names]: {
+    [variation in Variations]: Tagged<name, variation, Types[name][variation]>;
+  }[Variations];
+};
+
+/*
+ * @internal
+ */
+type OfAll<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = <
+  Name extends Names,
+  Variation extends Variations,
+  Type extends Types[Name][Variation]
+>(
+  name: Name,
+  variation: Variation,
+  value: Type,
+) => Opaque<Name, Variation>;
+
+/*
+ * @internal
+ */
+type OfTypes<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = {
+  [name in Names]: (Variations extends 'default'
+    ? (value: Types[name][Variations]) => Opaque<name, 'default'>
+    : <Variation extends Variations, Type extends Types[name][Variation]>(
+        variation: Variation,
+        value: Type,
+      ) => Opaque<name, Variation>) &
+    {
+      [variation in Variations]: (
+        value: Types[name][variation],
+      ) => Opaque<name, variation>;
+    };
+};
+
+/*
+ * @internal
+ */
+type OfVariations<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = {
+  [variation in Variations]: (<
+    Name extends Names,
+    Type extends Types[Name][variation]
+  >(
+    name: Name,
+    value: Type,
+  ) => Opaque<Name, variation>) &
+    {
+      [name in Names]: (
+        value: Types[name][variation],
+      ) => Opaque<name, variation>;
+    };
+};
+
+/**
+ * Constructor for opaque types
+ *
+```typescript
+  import * as Union from '@iadvize-oss/opaque-union';
+
+  const MessageAPI = Union.ofVariations({
+    Text: {
+      Sent: Union.type<$Text>(),
+      Pending: Union.type<$Text>(),
+    },
+    Image: {
+      Sent: Union.type<$Image>(),
+      Pending: Union.type<$Image>(),
+    },
+  });
+
+  MessageAPI.of('Text', 'Sent', { content: 'hello world' });
+  MessageAPI.of.Text('Sent', { content: 'hello world' });
+  MessageAPI.of.Text.Sent({ content: 'hello world' });
+  MessageAPI.of.Sent('Text', { content: 'hello world' });
+  MessageAPI.of.Sent.Text({ content: 'hello world' });
 ```
  *
  * @typeParam Types - Private types
  * @typeParam Keys - Keys of `Types` to map over
+ *
+ * @internal
  */
-export type Of<Types, Keys extends keyof Types & string> = {
-  [key in Keys]: (value: Types[key]) => Opaque<key>;
+type Of<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = OfAll<Names, Variations, Types> &
+  OfTypes<Names, Variations, Types> &
+  OfVariations<Names, Variations, Types>;
+
+/*
+ * @internal
+ */
+type IsAll<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations
+> = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  thing: any,
+) => thing is Opaques<Names, Variations>;
+
+/*
+ * @internal
+ */
+type IsTypes<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations
+> = {
+  [name in Names]: ((
+    opaque: Opaques<Names, Variations>,
+  ) => opaque is Opaques<name, Variations>) &
+    {
+      [variation in Variations]: (
+        opaque: Opaques<name, Variations>,
+      ) => opaque is Opaques<name, variation>;
+    };
+};
+
+/*
+ * @internal
+ */
+type IsVariations<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations
+> = {
+  [variation in Variations]: ((
+    opaque: Opaques<Names, Variations>,
+  ) => opaque is Opaques<Names, variation>) &
+    {
+      [name in Names]: (
+        opaque: Opaques<Names, variation>,
+      ) => opaque is Opaques<name, variation>;
+    };
 };
 
 /**
@@ -129,15 +370,26 @@ export type Of<Types, Keys extends keyof Types & string> = {
 ```typescript
   import * as Union from '@iadvize-oss/opaque-union';
 
-  const UnionAPI = Union.of({
-    Text: Union.type<$Text>(),
-    Image: Union.type<$Image>(),
+  const MessageAPI = Union.ofVariations({
+    Text: {
+      Sent: Union.type<$Text>(),
+      Pending: Union.type<$Text>(),
+    },
+    Image: {
+      Sent: Union.type<$Image>(),
+      Pending: Union.type<$Image>(),
+    },
   });
 
-  const text = Union.of.Text({ content: 'hello world' });
+  const text = Union.of.Text.Sent({ content: 'hello world' });
 
   UnionAPI.is('test'); // false
   UnionAPI.is(text); // true, text is Text | Image
+  UnionAPI.is.Text(text); // true, text is Text
+  UnionAPI.is.Text(text); // true, text is Text
+  UnionAPI.is.Sent(text); // true, text is variation sent
+  UnionAPI.is.Text.Sent(text); // true, text is Text and variation Sent
+  UnionAPI.is.Sent.Text(text); // true, text is Text and variation Sent
 ```
  *
  * @typeParam Types - Private types
@@ -147,90 +399,57 @@ export type Of<Types, Keys extends keyof Types & string> = {
  *
  * @returns Type guard result
  */
-type IsAll<Types, Keys extends keyof Types & string> = (
+type Is<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations
+> = IsTypes<Names, Variations> &
+  IsVariations<Names, Variations> &
+  IsAll<Names, Variations>;
+
+type ForTypes<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  thing: any,
-) => thing is Opaques<Types, Keys>[Keys];
-
-/**
- * Collection of type guards for specific union members
- *
-```typescript
-  import * as Union from '@iadvize-oss/opaque-union';
-
-  const UnionAPI = Union.of({
-    Text: Union.type<$Text>(),
-    Image: Union.type<$Image>(),
-  });
-
-  const text = Union.of.Text({ content: 'hello world' });
-
-  UnionAPI.Text.is(text); // true, text is Text
-```
- *
- * @typeParam Types - Private types
- * @typeParam Keys - Keys of `Types` to map over
- */
-type Is<Types, Keys extends keyof Types & string> = {
-  /**
-   * Type guards for one union members
-   *
-```typescript
-  import * as Union from '@iadvize-oss/opaque-union';
-
-  const UnionAPI = Union.of({
-    Text: Union.type<$Text>(),
-    Image: Union.type<$Image>(),
-  });
-
-  const text = Union.of.Text({ content: 'hello world' });
-
-  UnionAPI.Text.is(text); // true, text is Text
-```
-   *
-   * @param opaque - Any member of the opaque union
-   *
-   * @returns Type guard result
-   */
-  [key in Keys]: (opaque: Opaques<Types, Keys>[Keys]) => opaque is Opaque<key>;
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = {
+  [name in Names]: (Variations extends 'default'
+    ? {
+        iso: Iso<Opaque<name, Variations>, Types[name][Variations]>;
+        lensFromProp: LensFromProp<name, Variations, Types>;
+      }
+    : {}) &
+    {
+      [variation in Variations]: {
+        iso: Iso<Opaque<name, variation>, Types[name][variation]>;
+        lensFromProp: LensFromProp<name, variation, Types>;
+      };
+    } & {
+      fold: Fold<{ [variation in Variations]: Opaque<name, variation> }>;
+    };
 };
 
-/**
- * Fold function for the union
- *
-```typescript
-  import * as Union from '@iadvize-oss/opaque-union';
+type ForVariations<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = {
+  [variation in Variations]: {
+    iso: Iso<
+      Opaques<Names, variation>,
+      TaggedTypes<Names, variation, Types>[Names]
+    >;
 
-  const UnionAPI = Union.of({
-    Text: Union.type<$Text>(),
-    Image: Union.type<$Image>(),
-  });
-
-  const text = Union.of.Text({ content: 'hello world' });
-
-  Union.fold({
-    Text: () => 'this is a text',
-    Image: () => 'this is an image',
-  })(text); // 'this is a text'
-
-```
- *
- * @typeParam Types - Private types
- * @typeParam Keys - Keys of `Types` to map over
- *
- * @typeParam R - Type of the fold result
- *
- * @param funcs - Objects with one function for each member of the union. Each
- *                function accept a refined opaque type as its only parameter.
- *
- * @returns Function to call with any member of the union to get a result of
- *          type `R`
- */
-type Fold<Types, Keys extends keyof Types & string> = <R>(
-  funcs: {
-    [key in Keys]: (s: Opaques<Types, Keys>[key]) => R;
-  },
-) => (s: Opaques<Types, Keys>[Keys]) => R;
+    lensFromProp: LensFromProp<Names, variation, Types>;
+  } & {
+    [name in Names]: {
+      iso: Iso<Opaque<name, variation>, Types[name][variation]>;
+      lensFromProp: LensFromProp<name, variation, Types>;
+    };
+  } & {
+      fold: Fold<{ [name in Names]: Opaque<name, variation> }>;
+    };
+};
 
 /**
  * Some [`monocle-ts`](https://github.com/gcanti/monocle-ts) optics for each
@@ -259,14 +478,13 @@ export const source = MessageAPI.Image.lensFromProp('source').get;
  * @typeParam Types - Collection of private types of the union
  * @typeParam Keys - Keys of `Types` to map over
  */
-type Lenses<Types, Keys extends keyof Types & string> = {
-  [key in Keys]: {
-    iso: Iso<Opaque<key>, Types[key]>;
-    lensFromProp: <P extends keyof Types[key]>(
-      prop: P,
-    ) => Lens<Opaques<Types, key>[key], Types[key][P]>;
-  };
-};
+type For<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = ForTypes<Names, Variations, Types> &
+  ForVariations<Names, Variations, Types>;
 
 /**
  * The union api
@@ -274,7 +492,12 @@ type Lenses<Types, Keys extends keyof Types & string> = {
  * @typeParam Types - Collection of private types of the union
  * @typeParam Keys - Keys of `Types` to map over
  */
-export type UnionAPIDef<Types, Keys extends keyof Types & string> = {
+export type UnionAPIDef<
+  Names extends PossibleNames,
+  Variations extends PossibleVariations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [name in Names]: { [variation in Variations]: any } }
+> = {
   /**
    * Storing Types object here
    *
@@ -286,17 +509,17 @@ export type UnionAPIDef<Types, Keys extends keyof Types & string> = {
   /**
    * {@inheritDoc Of}
    */
-  of: Of<Types, Keys>;
+  of: Of<Names, Variations, Types>;
 
   /**
    * {@inheritDoc Is}
    */
-  is: Is<Types, Keys> & IsAll<Types, Keys>;
+  is: Is<Names, Variations>;
 
   /**
    * {@inheritDoc Fold}
    */
-  fold: Fold<Types, Keys>;
+  fold: Fold<{ [name in Names]: Opaques<name, Variations> }>;
 
   /**
    * Iso between any member of the union and any private types (tagged)
@@ -304,28 +527,15 @@ export type UnionAPIDef<Types, Keys extends keyof Types & string> = {
    * {@link Tagged}
    */
   iso: Iso<
-    Opaques<Types, SubtractKeysForNonObject<Types>>[SubtractKeysForNonObject<
-      Types
-    >],
-    TaggedTypes<
-      Types,
-      SubtractKeysForNonObject<Types>
-    >[SubtractKeysForNonObject<Types>]
+    Opaques<Names, Variations>,
+    TaggedTypes<Names, Variations, Types>[Names]
   >;
 
   /**
-   * Create a `Lens` between any opaque of the API and a property shared by all
-   * private types of the API (if any)
+   * {@inheritDoc LensFromProp}
    */
-  lensFromProp: <P extends keyof Types[SubtractKeysForNonObject<Types>]>(
-    prop: P,
-  ) => Lens<
-    Opaques<Types, SubtractKeysForNonObject<Types>>[SubtractKeysForNonObject<
-      Types
-    >],
-    Types[SubtractKeysForNonObject<Types>][P]
-  >;
-} & Lenses<Types, Keys>;
+  lensFromProp: LensFromProp<Names, Variations, Types>;
+} & For<Names, Variations, Types>;
 
 /**
  * This will extract all opaque types of a union API. This is more robust to
@@ -350,12 +560,13 @@ export type Message = Union.Type<typeof MessageAPI>;
  *
  * @typeParam Def - The union api definition
  */
-export type Type<Def> = Def extends UnionAPIDef<infer Types, infer Keys>
-  ? {
-      [key in keyof UnionAPIDef<Types, Keys>['of']]: ReturnType<
-        UnionAPIDef<Types, Keys>['of'][key]
-      >;
-    }[keyof UnionAPIDef<Types, Keys>['of']]
+export type Type<Def, VariationFilter = string> = Def extends UnionAPIDef<
+  infer Names,
+  infer Variations,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  any
+>
+  ? Opaques<Names, Variations & VariationFilter>
   : never;
 
 /**
@@ -389,76 +600,342 @@ const MessageAPI = Union.of({
  *
  * @returns A union api
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function of<Types extends { [key in keyof Types]: any }>(
-  types: Types,
-): UnionAPIDef<Types, keyof Types & string> {
-  type Keys = keyof Types & string;
-
-  const keys = Object.keys(types) as (keyof Types & string)[];
-
-  const ofs = keys.reduce(
-    (localOfs, key) => ({
-      ...localOfs,
+export function ofVariations<
+  Types extends {
+    [key in keyof Types]: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      [key]: (value: any) => ({
+      [key: string]: any;
+    };
+  }
+>(types: Types): UnionAPIDef<keyof Types, keyof Types[keyof Types], Types> {
+  type Names = keyof Types;
+  type Variations = keyof Types[keyof Types];
+
+  const names = Object.keys(types) as Names[];
+  const variations = Object.keys(types[names[0]]) as Variations[];
+
+  const ofsTypes = names.reduce((localOfTypes, name) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const defaultOf = function (variation: any, value: any) {
+      if (arguments.length <= 1) {
+        // eslint-disable-next-line no-param-reassign
+        value = variation;
+        // eslint-disable-next-line no-param-reassign
+        variation = 'default';
+      }
+
+      return {
         __OPAQUE__: '__OPAQUE__',
-        __OPAQUE_KEY__: key,
+        __OPAQUE_KEY__: name,
+        __OPAQUE_VARIATION__: variation,
         value,
-      }),
-    }),
-    {},
-  ) as Of<Types, Keys>;
+      };
+    };
 
-  const iss = keys.reduce(
-    (localIss, key) => ({
-      ...localIss,
+    variations.forEach((variation) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      [key]: (opaque: Opaque<any>) => {
-        return (
-          // eslint-disable-next-line no-underscore-dangle
-          opaque.__OPAQUE__ === '__OPAQUE__' && opaque.__OPAQUE_KEY__ === key
-        );
-      },
-    }),
-    {},
-  ) as Is<Types, Keys>;
+      defaultOf[variation] = (value: any) => ({
+        __OPAQUE__: '__OPAQUE__',
+        __OPAQUE_KEY__: name,
+        __OPAQUE_VARIATION__: variation,
+        value,
+      });
+    });
+
+    return {
+      ...localOfTypes,
+      [name]: defaultOf,
+    };
+  }, {}) as OfTypes<Names, Variations, Types>;
+
+  const ofsVariations = variations.reduce((localOfVariations, variation) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const defaultOf = (name: string, value: any) => ({
+      __OPAQUE__: '__OPAQUE__',
+      __OPAQUE_KEY__: name,
+      __OPAQUE_VARIATION__: variation,
+      value,
+    });
+
+    names.forEach((name) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      defaultOf[name] = (value: any) => ({
+        __OPAQUE__: '__OPAQUE__',
+        __OPAQUE_KEY__: name,
+        __OPAQUE_VARIATION__: variation,
+        value,
+      });
+    });
+
+    return {
+      ...localOfVariations,
+      [variation]: defaultOf,
+    };
+  }, {}) as OfVariations<Names, Variations, Types>;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isAll = ((thing: any): thing is Opaques<Types, Keys>[Keys] => {
-    if (
-      typeof thing === 'object' &&
-      '__OPAQUE__' in thing &&
-      '__OPAQUE_KEY__' in thing &&
+  const ofAll = ((name: Names, variation: Variations, value: any) => ({
+    __OPAQUE__: '__OPAQUE__',
+    __OPAQUE_KEY__: name,
+    __OPAQUE_VARIATION__: variation,
+    value,
+  })) as OfAll<Names, Variations, Types> &
+    OfTypes<Names, Variations, Types> &
+    OfVariations<Names, Variations, Types>;
+
+  names.forEach((name) => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    ofAll[name] = ofsTypes[name];
+  });
+
+  variations.forEach((variation) => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    ofAll[variation] = ofsVariations[variation];
+  });
+
+  const isTypes = names.reduce((localIsTypes, name) => {
+    const defaultIs = (thing: Opaque<Names, Variations>) => {
+      if (typeof thing !== 'object') {
+        return false;
+      }
+
+      if (
+        !(
+          '__OPAQUE__' in thing &&
+          // eslint-disable-next-line no-underscore-dangle
+          thing.__OPAQUE__ === '__OPAQUE__' &&
+          '__OPAQUE_KEY__' in thing &&
+          '__OPAQUE_VARIATION__' in thing
+        )
+      ) {
+        return false;
+      }
+
       // eslint-disable-next-line no-underscore-dangle
-      keys.indexOf(thing.__OPAQUE_KEY__) > -1
+      if (thing.__OPAQUE_KEY__ !== name) {
+        return false;
+      }
+
+      // eslint-disable-next-line no-underscore-dangle
+      if (variations.includes(thing.__OPAQUE_VARIATION__)) {
+        return true;
+      }
+
+      return false;
+    };
+
+    variations.forEach((variation) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      defaultIs[variation] = (thing: Opaque<Names, Variations>) => {
+        if (typeof thing !== 'object') {
+          return false;
+        }
+
+        if (
+          !(
+            '__OPAQUE__' in thing &&
+            // eslint-disable-next-line no-underscore-dangle
+            thing.__OPAQUE__ === '__OPAQUE__' &&
+            '__OPAQUE_KEY__' in thing &&
+            '__OPAQUE_VARIATION__' in thing
+          )
+        ) {
+          return false;
+        }
+
+        // eslint-disable-next-line no-underscore-dangle
+        if (thing.__OPAQUE_KEY__ !== name) {
+          return false;
+        }
+
+        // eslint-disable-next-line no-underscore-dangle
+        if (thing.__OPAQUE_VARIATION__ === variation) {
+          return true;
+        }
+
+        return false;
+      };
+    });
+
+    return {
+      ...localIsTypes,
+      [name]: defaultIs,
+    };
+  }, {}) as IsTypes<Names, Variations>;
+
+  const isVariations = variations.reduce((localIsVariations, variation) => {
+    const defaultIs = (thing: Opaque<Names, Variations>) => {
+      if (typeof thing !== 'object') {
+        return false;
+      }
+
+      if (
+        !(
+          '__OPAQUE__' in thing &&
+          // eslint-disable-next-line no-underscore-dangle
+          thing.__OPAQUE__ === '__OPAQUE__' &&
+          '__OPAQUE_KEY__' in thing &&
+          '__OPAQUE_VARIATION__' in thing
+        )
+      ) {
+        return false;
+      }
+
+      // eslint-disable-next-line no-underscore-dangle
+      if (thing.__OPAQUE_VARIATION__ !== variation) {
+        return false;
+      }
+
+      // eslint-disable-next-line no-underscore-dangle
+      if (names.includes(thing.__OPAQUE_KEY__)) {
+        return true;
+      }
+
+      return false;
+    };
+
+    names.forEach((name) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      defaultIs[name] = (thing: Opaque<Names, Variations>) => {
+        if (typeof thing !== 'object') {
+          return false;
+        }
+
+        if (
+          !(
+            '__OPAQUE__' in thing &&
+            // eslint-disable-next-line no-underscore-dangle
+            thing.__OPAQUE__ === '__OPAQUE__' &&
+            '__OPAQUE_KEY__' in thing &&
+            '__OPAQUE_VARIATION__' in thing
+          )
+        ) {
+          return false;
+        }
+
+        // eslint-disable-next-line no-underscore-dangle
+        if (thing.__OPAQUE_KEY__ !== name) {
+          return false;
+        }
+
+        // eslint-disable-next-line no-underscore-dangle
+        if (thing.__OPAQUE_VARIATION__ === variation) {
+          return true;
+        }
+
+        return false;
+      };
+    });
+
+    return {
+      ...localIsVariations,
+      [variation]: defaultIs,
+    };
+  }, {}) as IsVariations<Names, Variations>;
+
+  const isAll = ((
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    thing: any,
+  ): thing is Opaques<Names, Variations> => {
+    if (typeof thing !== 'object') {
+      return false;
+    }
+
+    if (
+      !(
+        '__OPAQUE__' in thing &&
+        // eslint-disable-next-line no-underscore-dangle
+        thing.__OPAQUE__ === '__OPAQUE__' &&
+        '__OPAQUE_KEY__' in thing &&
+        '__OPAQUE_VARIATION__' in thing
+      )
     ) {
+      return false;
+    }
+
+    // eslint-disable-next-line no-underscore-dangle
+    const keyIndex = names.indexOf(thing.__OPAQUE_KEY__);
+
+    if (keyIndex === -1) {
+      return false;
+    }
+
+    // eslint-disable-next-line no-underscore-dangle
+    if (variations.includes(thing.__OPAQUE_VARIATION__)) {
       return true;
     }
 
     return false;
-  }) as IsAll<Types, Keys> & Is<Types, Keys>;
+  }) as IsAll<Names, Variations> &
+    IsTypes<Names, Variations> &
+    IsVariations<Names, Variations>;
 
-  keys.forEach((key) => {
+  names.forEach((name) => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    isAll[key] = iss[key];
+    isAll[name] = isTypes[name];
   });
 
-  const fold = createFoldObject(iss);
+  variations.forEach((variation) => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    isAll[variation] = isVariations[variation];
+  });
 
-  const lenses = keys.reduce((localLenses, key) => {
-    const get = (opaque: Opaque<Keys>): Types[Keys] => {
-      return opaque.value as Types[Keys];
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const foldAll = createFoldObject(isTypes) as Fold<
+    { [name in Names]: Opaques<name, Variations> }
+  >;
+
+  const forTypes = names.reduce((localForTypes, name) => {
+    const get = (opaque: Opaque<Names, Variations>) => {
+      return opaque.value as Types[Names][Variations];
     };
 
-    const reverseGet = ofs[key];
+    const defaultFor = (() => {
+      const reverseGet = ofsTypes[name as Names].default;
 
-    const iso = new Iso(get, reverseGet);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const iso = new Iso(get, reverseGet);
 
-    return {
-      ...localLenses,
-      [key]: {
+      return {
+        ...localForTypes,
+        [name]: {
+          iso,
+          lensFromProp: <Prop>(prop: Prop) => {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            const lens = Lens.fromProp()(prop);
+
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            return iso.composeLens(lens);
+          },
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          fold: createFoldObject(isVariations),
+        },
+      };
+    })();
+
+    variations.forEach((variation) => {
+      const reverseGet = ofsTypes[name as Names][variation as Variations];
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const iso = new Iso(get, reverseGet);
+
+      const variationLenses = {
         iso,
         lensFromProp: <Prop>(prop: Prop) => {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -469,38 +946,123 @@ export function of<Types extends { [key in keyof Types]: any }>(
           // @ts-ignore
           return iso.composeLens(lens);
         },
+      };
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      defaultFor[name][variation] = variationLenses;
+    });
+
+    return defaultFor;
+  }, {}) as ForTypes<Names, Variations, Types>;
+
+  const forVariations = variations.reduce((localForVariations, variation) => {
+    const get = (opaque: Opaque<Names, Variations>) => {
+      return opaque.value as Types[Names][Variations];
+    };
+
+    const iso = new Iso<
+      Opaques<Names, Variations>,
+      TaggedTypes<Names, Variations, Types>[Names]
+    >(
+      (opaque: Opaques<Names, Variations>) => ({
+        // eslint-disable-next-line no-underscore-dangle
+        _tag: opaque.__OPAQUE_KEY__,
+        _variation: variation,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        ...opaque.value,
+      }),
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      ({
+        _tag,
+        _variation,
+        ...value
+      }: TaggedTypes<Names, Variations, Types>[Names]) => ({
+        __OPAQUE__: '__OPAQUE__',
+        __OPAQUE_KEY__: _tag,
+        __OPAQUE_VARIATION__: variation,
+        value,
+      }),
+    );
+
+    const lensFromProp = (<Prop>(prop: Prop) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const lens = Lens.fromProp()(prop);
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      return iso.composeLens(lens);
+    }) as <P extends keyof Types[Names][Variations]>(
+      prop: P,
+    ) => Lens<Opaques<Names, Variations>, Types[Names][Variations][P]>;
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const fold = createFoldObject(isTypes);
+
+    const newForVariations = {
+      ...localForVariations,
+      [variation]: {
+        iso,
+        lensFromProp,
+        fold,
       },
     };
-  }, {}) as Lenses<Types, Keys>;
+
+    names.forEach((name) => {
+      const reverseGet = ofsVariations[variation as Variations][name as Names];
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const localIso = new Iso(get, reverseGet);
+
+      const nameLenses = {
+        iso: localIso,
+        lensFromProp: <Prop>(prop: Prop) => {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          const lens = Lens.fromProp()(prop);
+
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          return localIso.composeLens(lens);
+        },
+      };
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      newForVariations[variation][name] = nameLenses;
+    });
+
+    return newForVariations;
+  }, {}) as ForVariations<Names, Variations, Types>;
 
   const iso = new Iso<
-    Opaques<Types, SubtractKeysForNonObject<Types>>[SubtractKeysForNonObject<
-      Types
-    >],
-    TaggedTypes<
-      Types,
-      SubtractKeysForNonObject<Types>
-    >[SubtractKeysForNonObject<Types>]
+    Opaques<Names, Variations>,
+    TaggedTypes<Names, Variations, Types>[Names]
   >(
-    (
-      opaque: Opaques<
-        Types,
-        SubtractKeysForNonObject<Types>
-      >[SubtractKeysForNonObject<Types>],
-    ) => ({
+    (opaque: Opaques<Names, Variations>) => ({
       // eslint-disable-next-line no-underscore-dangle
       _tag: opaque.__OPAQUE_KEY__,
-      ...(opaque.value as Types[SubtractKeysForNonObject<Types>]),
+      // eslint-disable-next-line no-underscore-dangle
+      _variation: opaque.__OPAQUE_VARIATION__,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      ...opaque.value,
     }),
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     ({
       _tag,
+      _variation,
       ...value
-    }: TaggedTypes<
-      Types,
-      SubtractKeysForNonObject<Types>
-    >[SubtractKeysForNonObject<Types>]) => ({
+    }: TaggedTypes<Names, Variations, Types>[Names]) => ({
       __OPAQUE__: '__OPAQUE__',
       __OPAQUE_KEY__: _tag,
+      __OPAQUE_VARIATION__: _variation,
       value,
     }),
   );
@@ -513,28 +1075,44 @@ export function of<Types extends { [key in keyof Types]: any }>(
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     return iso.composeLens(lens);
-  }) as <P extends keyof Types[SubtractKeysForNonObject<Types>]>(
+  }) as <P extends keyof Types[Names][Variations]>(
     prop: P,
-  ) => Lens<
-    Opaques<Types, SubtractKeysForNonObject<Types>>[SubtractKeysForNonObject<
-      Types
-    >],
-    Types[SubtractKeysForNonObject<Types>][P]
-  >;
+  ) => Lens<Opaques<Names, Variations>, Types[Names][Variations][P]>;
 
   return {
     types,
-    of: ofs,
+    of: ofAll,
     is: isAll,
-    fold,
+    fold: foldAll,
     iso,
     lensFromProp,
-    ...lenses,
+    ...forTypes,
+    ...forVariations,
   };
 }
 
 /**
- * Create a new union omiting the given union's variants
+ * Same as ofVariations with a unique "default" variation
+ *
+ * {@link ofVariations}
+ */
+export function of<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Types extends { [key in keyof Types]: any }
+>(types: Types) {
+  type Names = keyof Types;
+
+  const realTypes = {} as { [name in Names]: { default: Types[name] } };
+
+  Object.keys(types).forEach((name) => {
+    realTypes[name as Names] = { default: types[name as Names] };
+  });
+
+  return ofVariations<typeof realTypes>(realTypes);
+}
+
+/**
+ * Create a new union omiting the given union's types
  *
  * @example
 ```typescript
@@ -547,15 +1125,20 @@ const MediaAPI = Union.omit(MessageAPI, ['Text']);
  * @returns The new union api definition
  */
 export function omit<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [key in keyof Types]: any },
+  Types extends {
+    [key in keyof Types]: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [key: string]: any;
+    };
+  },
   OmittedKeys extends keyof Types
 >(
-  union: UnionAPIDef<Types, keyof Types & string>,
+  union: UnionAPIDef<keyof Types, keyof Types[keyof Types], Types>,
   omittedKeys: OmittedKeys[],
 ): UnionAPIDef<
-  Omit<Types, OmittedKeys>,
-  keyof Omit<Types, OmittedKeys> & string
+  Exclude<keyof Types, OmittedKeys>,
+  keyof Types[Exclude<keyof Types, OmittedKeys>],
+  Omit<Types, OmittedKeys>
 > {
   const filteredTypes = Object.keys(union.types).reduce((localTypes, key) => {
     if (omittedKeys.indexOf(key as OmittedKeys) > -1) {
@@ -568,11 +1151,11 @@ export function omit<
     };
   }, {}) as Omit<Types, OmittedKeys>;
 
-  return of(filteredTypes);
+  return ofVariations(filteredTypes);
 }
 
 /**
- * Create a new union comprising only the picked union's members
+ * Create a new union comprising only of the picked union's members
  *
  * @example
 ```typescript
@@ -585,13 +1168,17 @@ const MediaAPI = Union.pick(MessageAPI, ['Image', 'Video']);
  * @returns The new union api definition
  */
 export function pick<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [key in keyof Types]: any },
+  Types extends {
+    [key in keyof Types]: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [key: string]: any;
+    };
+  },
   OnlyKeys extends keyof Types
 >(
-  union: UnionAPIDef<Types, keyof Types & string>,
+  union: UnionAPIDef<keyof Types, keyof Types[keyof Types], Types>,
   onlyKeys: OnlyKeys[],
-): UnionAPIDef<Pick<Types, OnlyKeys>, keyof Pick<Types, OnlyKeys> & string> {
+): UnionAPIDef<OnlyKeys, keyof Types[OnlyKeys], Pick<Types, OnlyKeys>> {
   const filteredTypes = Object.keys(union.types).reduce((localTypes, key) => {
     if (onlyKeys.indexOf(key as OnlyKeys) === -1) {
       return localTypes;
@@ -603,7 +1190,7 @@ export function pick<
     };
   }, {}) as Pick<Types, OnlyKeys>;
 
-  return of(filteredTypes);
+  return ofVariations(filteredTypes);
 }
 
 /**
@@ -628,18 +1215,84 @@ const MessageAndCarsAPI = Union.merge(MessageAPI, CarAPI);
  * @returns The new union api definition
  */
 export function merge<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types1 extends { [key in keyof Types1]: any },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types2 extends { [key in keyof Types2]: any }
+  Types1 extends {
+    [key in keyof Types1]: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [key: string]: any;
+    };
+  },
+  Types2 extends {
+    [key in keyof Types2]: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [key: string]: any;
+    };
+  }
 >(
-  union1: UnionAPIDef<Types1, keyof Types1 & string>,
-  union2: UnionAPIDef<Types2, keyof Types2 & string>,
-): UnionAPIDef<Types1 & Types2, keyof (Types1 & Types2) & string> {
+  union1: UnionAPIDef<keyof Types1, keyof Types1[keyof Types1], Types1>,
+  union2: UnionAPIDef<keyof Types2, keyof Types2[keyof Types2], Types2>,
+): UnionAPIDef<
+  keyof Types1 | keyof Types2,
+  keyof (Types1 & Types2)[keyof Types1 | keyof Types2],
+  Types1 & Types2
+> {
   const types = {
     ...union1.types,
     ...union2.types,
   };
 
-  return of(types);
+  return ofVariations(types);
+}
+
+/**
+ * Create a new union omiting the given union's variances
+ *
+ * @example
+```typescript
+const MediaAPI = Union.omit(MessageAPI, ['Text']);
+```
+ *
+ * @typeParam Types - Union initial private types
+ * @typeParam OmittedKeys - Keys of types to omit
+ *
+ * @returns The new union api definition
+ */
+export function omitVariations<
+  Types extends {
+    [key in keyof Types]: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [key: string]: any;
+    };
+  },
+  OmittedVariations extends keyof Types[keyof Types]
+>(
+  union: UnionAPIDef<keyof Types, keyof Types[keyof Types], Types>,
+  omittedVariations: OmittedVariations[],
+) {
+  type Names = keyof Types;
+  type Variations = keyof Types[keyof Types];
+
+  const names = Object.keys(union.types) as Names[];
+  const variations = Object.keys(union.types[names[0]]) as Variations[];
+
+  const filteredTypes = names.reduce((localTypes, name) => {
+    const localType = union.types[name];
+
+    const filteredType = variations.reduce((localVariations, variation) => {
+      if (omittedVariations.indexOf(variation as OmittedVariations) > -1) {
+        return localVariations;
+      }
+
+      return {
+        ...localVariations,
+        [variation]: localType[variation as Variations],
+      };
+    }, {});
+
+    return {
+      ...localTypes,
+      [name]: filteredType,
+    };
+  }, {}) as { [name in Names]: Omit<Types[name], OmittedVariations> };
+
+  return ofVariations(filteredTypes);
 }
