@@ -76,19 +76,19 @@
 				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
 
 <span class="hljs-keyword">type</span> $Text = {
-  author: <span class="hljs-built_in">string</span>;
+  <span class="hljs-attr">author</span>: <span class="hljs-built_in">string</span>;
   content: <span class="hljs-built_in">string</span>;
 }
 
 <span class="hljs-keyword">type</span> $Image = {
-  author: <span class="hljs-built_in">string</span>;
+  <span class="hljs-attr">author</span>: <span class="hljs-built_in">string</span>;
   source: <span class="hljs-built_in">string</span>;
   description: <span class="hljs-built_in">string</span>;
   mimetype: <span class="hljs-string">&#x27;jpeg&#x27;</span> | <span class="hljs-string">&#x27;png&#x27;</span>,
 }
 
 <span class="hljs-keyword">type</span> $Video = {
-  author: <span class="hljs-built_in">string</span>;
+  <span class="hljs-attr">author</span>: <span class="hljs-built_in">string</span>;
   source: <span class="hljs-built_in">string</span>;
   description: <span class="hljs-built_in">string</span>;
   autoplay: <span class="hljs-built_in">boolean</span>;
@@ -104,9 +104,9 @@
 <span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Union <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@iadvize-oss/opaque-union&#x27;</span>;
 
 <span class="hljs-keyword">const</span> MessageAPI = Union.of({
-  Text: Union.type&lt;$Text&gt;(),
-  Image: Union.type&lt;$Image&gt;(),
-  Video: Union.type&lt;$Video&gt;(),
+  <span class="hljs-attr">Text</span>: Union.type&lt;$Text&gt;(),
+  <span class="hljs-attr">Image</span>: Union.type&lt;$Image&gt;(),
+  <span class="hljs-attr">Video</span>: Union.type&lt;$Video&gt;(),
 });
 
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">type</span> Text = ReturnType&lt;<span class="hljs-keyword">typeof</span> MessageAPI.of.Text&gt;; <span class="hljs-comment">// Union.Opaque&lt;&#x27;Text&#x27;&gt;</span>
@@ -134,15 +134,15 @@
 				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Message <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/message.ts&#x27;</span>;
 
 <span class="hljs-keyword">const</span> textMessage = Message.createText({ <span class="hljs-comment">// textMessage is opaque</span>
-  author: <span class="hljs-string">&#x27;Jean&#x27;</span>,
-  content: <span class="hljs-string">&#x27;Hello world!&#x27;</span>,
+  <span class="hljs-attr">author</span>: <span class="hljs-string">&#x27;Jean&#x27;</span>,
+  <span class="hljs-attr">content</span>: <span class="hljs-string">&#x27;Hello world!&#x27;</span>,
 });
 
 <span class="hljs-keyword">const</span> imageMessage = Message.createImage({
-  author: <span class="hljs-string">&#x27;Peter&#x27;</span>,
-  source: <span class="hljs-string">&#x27;http://...&#x27;</span>,
-  description: <span class="hljs-string">&#x27;A goat&#x27;</span>,
-  mimetype: <span class="hljs-string">&#x27;jpeg&#x27;</span>,
+  <span class="hljs-attr">author</span>: <span class="hljs-string">&#x27;Peter&#x27;</span>,
+  <span class="hljs-attr">source</span>: <span class="hljs-string">&#x27;http://...&#x27;</span>,
+  <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;A goat&#x27;</span>,
+  <span class="hljs-attr">mimetype</span>: <span class="hljs-string">&#x27;jpeg&#x27;</span>,
 });</code></pre>
 				<p>We can&#39;t work directly on the opaque <code>textMessage</code> or <code>imageMessage</code> variables
 				because we can&#39;t see what&#39;s inside.</p>
@@ -173,9 +173,9 @@ textMessage.author</code></pre>
 				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
 
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> summary = MessageAPI.fold({
-  Text: <span class="hljs-function"><span class="hljs-params">text</span> =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${author(text)}</span> send &quot;<span class="hljs-subst">${content(text)}</span>&quot;`</span>,
-  Image: <span class="hljs-function"><span class="hljs-params">image</span> =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${author(image)}</span> send a <span class="hljs-subst">${mimetype(image)}</span> image &quot;<span class="hljs-subst">${description(image)}</span>&quot;`</span>,
-  Video: <span class="hljs-function"><span class="hljs-params">video</span> =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${author(video)}</span> send a video &quot;<span class="hljs-subst">${description(video)}</span>&quot;`</span>,
+  <span class="hljs-attr">Text</span>: <span class="hljs-function"><span class="hljs-params">text</span> =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${author(text)}</span> send &quot;<span class="hljs-subst">${content(text)}</span>&quot;`</span>,
+  <span class="hljs-attr">Image</span>: <span class="hljs-function"><span class="hljs-params">image</span> =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${author(image)}</span> send a <span class="hljs-subst">${mimetype(image)}</span> image &quot;<span class="hljs-subst">${description(image)}</span>&quot;`</span>,
+  <span class="hljs-attr">Video</span>: <span class="hljs-function"><span class="hljs-params">video</span> =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${author(video)}</span> send a video &quot;<span class="hljs-subst">${description(video)}</span>&quot;`</span>,
 });</code></pre>
 				<p>To be used for example like that: </p>
 				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Message <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/message.ts&#x27;</span>;
@@ -187,7 +187,7 @@ textMessage.author</code></pre>
 				<pre><code class="language-typescript"><span class="hljs-comment">// message.ts</span>
 
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> addSignature = <span class="hljs-function">(<span class="hljs-params">signature: <span class="hljs-built_in">string</span></span>) =&gt;</span> MessageAPI.Text.iso.modify(
-  $text =&gt; ({ ...$text, content: <span class="hljs-string">`<span class="hljs-subst">${$text.content}</span>\n<span class="hljs-subst">${signature}</span>`</span> })
+  $text =&gt; ({ ...$text, <span class="hljs-attr">content</span>: <span class="hljs-string">`<span class="hljs-subst">${$text.content}</span>\n<span class="hljs-subst">${signature}</span>`</span> })
 );</code></pre>
 				<p>It&#39;s very composable. For example here with
 				<a href="https://gcanti.github.io/fp-ts/modules/">fp-ts</a> <code>pipe</code> function:</p>
@@ -209,18 +209,18 @@ textMessage.author</code></pre>
 
 <span class="hljs-keyword">if</span> (Message.isText(message)) {
   <span class="hljs-keyword">return</span> &lt;TextMessage message={message}&gt;
-} <span class="hljs-keyword">else</span> {
-  <span class="hljs-keyword">return</span> &lt;UnsupportedMessage &gt;
+} else {
+  return &lt;UnsupportedMessage &gt;
 }
 
-<span class="hljs-comment">// or</span>
+// or
 
-<span class="hljs-keyword">return</span> pipe(
+return pipe(
   message,
   Message.fold({
-    Text: <span class="hljs-function"><span class="hljs-params">text</span> =&gt;</span> &lt;TextMessage message={text} /&gt;,
-    Image: <span class="hljs-function">() =&gt;</span> &lt;UnsupportedMessage /&gt;,
-    Video: <span class="hljs-function">() =&gt;</span> &lt;UnsupportedMessage /&gt;,
+    Text: text =&gt; &lt;TextMessage message={text} /&gt;,
+    Image: () =&gt; &lt;UnsupportedMessage /&gt;,
+    Video: () =&gt; &lt;UnsupportedMessage /&gt;,
   }),
 );</code></pre>
 				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
@@ -240,8 +240,8 @@ textMessage.author</code></pre>
 					<h2><code>Iso</code></h2>
 				</a>
 				<p>An <code>Iso</code> is a tool to transform between two types without any loss. In our case:</p>
-				<pre><code>  Opaque&lt;Key&gt; ---&gt;<span class="hljs-built_in"> Type </span>(get, <span class="hljs-keyword">from</span>, unwrap)
-  Opaque&lt;Key&gt; &lt;---<span class="hljs-built_in"> Type </span>(reverseGet, <span class="hljs-keyword">to</span>, wrap)</code></pre><p>It&#39;s particulary useful to transform the private value inside the opaque but you
+				<pre><code>  Opaque&lt;<span class="hljs-keyword">Key</span>&gt; ---&gt; Type (<span class="hljs-keyword">get</span>, <span class="hljs-keyword">from</span>, unwrap)
+  Opaque&lt;<span class="hljs-keyword">Key</span>&gt; &lt;--- Type (reverseGet, <span class="hljs-keyword">to</span>, wrap)</code></pre><p>It&#39;s particulary useful to transform the private value inside the opaque but you
 					can also combine it with other
 				<a href="https://github.com/gcanti/monocle-ts">monocle-ts</a> optics. </p>
 				<p>Use <code>&lt;API&gt;.&lt;Type&gt;.iso</code> to have full control over one type and its corresponding
@@ -296,17 +296,17 @@ textMessage.author</code></pre>
 				<p>In your module:</p>
 				<pre><code class="language-typescript"><span class="hljs-comment">// media.ts</span>
 <span class="hljs-keyword">type</span> $Image = {
-  source: <span class="hljs-built_in">string</span>;
+  <span class="hljs-attr">source</span>: <span class="hljs-built_in">string</span>;
 }
 
 <span class="hljs-keyword">type</span> $Video = {
-  source: <span class="hljs-built_in">string</span>;
+  <span class="hljs-attr">source</span>: <span class="hljs-built_in">string</span>;
   autoplay: <span class="hljs-built_in">boolean</span>;
 }
 
 <span class="hljs-keyword">const</span> MediaAPI = Union.of({
-  Image: Union.type&lt;$Image&gt;(),
-  Video: Union.type&lt;$Video&gt;(),
+  <span class="hljs-attr">Image</span>: Union.type&lt;$Image&gt;(),
+  <span class="hljs-attr">Video</span>: Union.type&lt;$Video&gt;(),
 });
 
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> createImage = MessageAPI.of.Image;
@@ -317,7 +317,7 @@ textMessage.author</code></pre>
 				<p>Somewhere else in your app:</p>
 				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Media <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/media.ts&#x27;</span>;
 
-<span class="hljs-keyword">const</span> image = Media.createImage({ source: <span class="hljs-string">&#x27;http://a.com/b.jpeg &#x27;</span> });
+<span class="hljs-keyword">const</span> image = Media.createImage({ <span class="hljs-attr">source</span>: <span class="hljs-string">&#x27;http://a.com/b.jpeg &#x27;</span> });
 
 <span class="hljs-built_in">console</span>.log(<span class="hljs-string">&#x27;source: &#x27;</span>, source(image)); <span class="hljs-comment">// http://a.com/b.jpeg</span>
 
@@ -332,7 +332,7 @@ textMessage.author</code></pre>
 				<p>Somewhere else in your app:</p>
 				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> Media <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;./path/to/media.ts&#x27;</span>;
 
-<span class="hljs-keyword">const</span> video = Media.createImage({ source: <span class="hljs-string">&#x27;http://a.com/b.jpeg &#x27;</span>, autoplay: <span class="hljs-literal">true</span> });
+<span class="hljs-keyword">const</span> video = Media.createImage({ <span class="hljs-attr">source</span>: <span class="hljs-string">&#x27;http://a.com/b.jpeg &#x27;</span>, <span class="hljs-attr">autoplay</span>: <span class="hljs-literal">true</span> });
 
 <span class="hljs-keyword">const</span> videoWithoutAutoplay = Media.removeAutoPlay(video);</code></pre>
 			</div>
