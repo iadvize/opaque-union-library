@@ -1,6 +1,6 @@
 {
   "name": "@iadvize-oss/opaque-union",
-  "version": "0.0.1-beta.0",
+  "version": "0.0.1-beta.1",
   "description": "Functional opaque union api for Typescript and Javascript",
   "main": "dist/index.js",
   "module": "esm/index.js",
