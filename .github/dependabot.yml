@@ -1,0 +1,27 @@
+version: 2
+registries:
+  npm-registry-iadvize-jfrog-io-iadvize-api-npm-iadvize-npm:
+    type: npm-registry
+    url: https://iadvize.jfrog.io/iadvize/api/npm/iadvize-npm
+    username: "${{secrets.NPM_REGISTRY_IADVIZE_JFROG_IO_IADVIZE_API_NPM_IADVIZE_NPM_USERNAME}}"
+    password: "${{secrets.NPM_REGISTRY_IADVIZE_JFROG_IO_IADVIZE_API_NPM_IADVIZE_NPM_PASSWORD}}"
+
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "00:00"
+    timezone: Europe/Paris
+  pull-request-branch-name:
+    separator: "-"
+  labels:
+  - "Action: no bump"
+  versioning-strategy: increase
+  allow:
+  - dependency-name: nothing
+  commit-message:
+    prefix: misc
+  rebase-strategy: disabled
+  registries:
+  - npm-registry-iadvize-jfrog-io-iadvize-api-npm-iadvize-npm
