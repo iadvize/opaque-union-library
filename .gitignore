@@ -5,3 +5,4 @@ coverage/
 docs/
 gh-pages-content/
 .eslintcache
+.idea
