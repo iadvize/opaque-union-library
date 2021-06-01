@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Updated dependencies 
+## [1.0.1]
+
+-   Updated dependencies 
 
 ## [1.0.0]
 
 -   first release
 
-[Unreleased]: https://github.com/iadvize/opaque-union-library/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/iadvize/opaque-union-library/compare/v1.0.1...HEAD
+
+[1.0.1]: https://github.com/iadvize/opaque-union-library/compare/v1.0.0...v1.0.1
 
 [1.0.0]: https://github.com/iadvize/opaque-union-library/compare/HEAD...v1.0.0
