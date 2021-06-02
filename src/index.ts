@@ -49,7 +49,7 @@ type PossibleVariations = string | number | symbol;
  */
 export type Opaques<
   Names extends PossibleNames,
-  Variations extends PossibleVariations
+  Variations extends PossibleVariations,
 > = {
   [name in Names]: {
     [variation in Variations]: Opaque<name, variation>;
@@ -75,7 +75,7 @@ export type Opaques<
  * @returns Something. Do not rely on it. Used internaly only.
  */
 export function type<T>(): T {
-  return (undefined as unknown) as T;
+  return undefined as unknown as T;
 }
 
 /**
@@ -160,7 +160,7 @@ type LensFromProp<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = {
   /**
    * Basic definition: we work on the full Opaques\<Names, Variations\>
@@ -175,7 +175,7 @@ type LensFromProp<
    */
   <
     C extends Opaques<Names, Variations>,
-    Prop extends keyof Types[Names][Variations]
+    Prop extends keyof Types[Names][Variations],
   >(
     prop: Prop,
   ): Lens<C, Types[Names][Variations][Prop]>;
@@ -192,7 +192,7 @@ type LensFromProp<
 export type Tagged<
   Name extends PossibleNames,
   Variation extends PossibleVariations,
-  Type
+  Type,
 > = Type & {
   readonly _tag: Name;
   readonly _variation: Variation;
@@ -211,7 +211,7 @@ type TaggedTypes<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = {
   [name in Names]: {
     [variation in Variations]: Tagged<name, variation, Types[name][variation]>;
@@ -225,11 +225,11 @@ type OfAll<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = <
   Name extends Names,
   Variation extends Variations,
-  Type extends Types[Name][Variation]
+  Type extends Types[Name][Variation],
 >(
   name: Name,
   variation: Variation,
@@ -243,7 +243,7 @@ type OfTypes<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = {
   [name in Names]: (Variations extends 'default'
     ? (value: Types[name][Variations]) => Opaque<name, 'default'>
@@ -265,11 +265,11 @@ type OfVariations<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = {
   [variation in Variations]: (<
     Name extends Names,
-    Type extends Types[Name][variation]
+    Type extends Types[Name][variation],
   >(
     name: Name,
     value: Type,
@@ -314,7 +314,7 @@ type Of<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = OfAll<Names, Variations, Types> &
   OfTypes<Names, Variations, Types> &
   OfVariations<Names, Variations, Types>;
@@ -322,20 +322,18 @@ type Of<
 /*
  * @internal
  */
-type IsAll<
-  Names extends PossibleNames,
-  Variations extends PossibleVariations
-> = (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  thing: any,
-) => thing is Opaques<Names, Variations>;
+type IsAll<Names extends PossibleNames, Variations extends PossibleVariations> =
+  (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    thing: any,
+  ) => thing is Opaques<Names, Variations>;
 
 /*
  * @internal
  */
 type IsTypes<
   Names extends PossibleNames,
-  Variations extends PossibleVariations
+  Variations extends PossibleVariations,
 > = {
   [name in Names]: ((
     opaque: Opaques<Names, Variations>,
@@ -352,7 +350,7 @@ type IsTypes<
  */
 type IsVariations<
   Names extends PossibleNames,
-  Variations extends PossibleVariations
+  Variations extends PossibleVariations,
 > = {
   [variation in Variations]: ((
     opaque: Opaques<Names, Variations>,
@@ -399,18 +397,16 @@ type IsVariations<
  *
  * @returns Type guard result
  */
-type Is<
-  Names extends PossibleNames,
-  Variations extends PossibleVariations
-> = IsTypes<Names, Variations> &
-  IsVariations<Names, Variations> &
-  IsAll<Names, Variations>;
+type Is<Names extends PossibleNames, Variations extends PossibleVariations> =
+  IsTypes<Names, Variations> &
+    IsVariations<Names, Variations> &
+    IsAll<Names, Variations>;
 
 type ForTypes<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = {
   [name in Names]: (Variations extends 'default'
     ? {
@@ -432,7 +428,7 @@ type ForVariations<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = {
   [variation in Variations]: {
     iso: Iso<
@@ -482,7 +478,7 @@ type For<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = ForTypes<Names, Variations, Types> &
   ForVariations<Names, Variations, Types>;
 
@@ -496,7 +492,7 @@ export type UnionAPIDef<
   Names extends PossibleNames,
   Variations extends PossibleVariations,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [name in Names]: { [variation in Variations]: any } }
+  Types extends { [name in Names]: { [variation in Variations]: any } },
 > = {
   /**
    * Storing Types object here
@@ -606,7 +602,7 @@ export function ofVariations<
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       [key: string]: any;
     };
-  }
+  },
 >(types: Types): UnionAPIDef<keyof Types, keyof Types[keyof Types], Types> {
   type Names = keyof Types;
   type Variations = keyof Types[keyof Types];
@@ -1098,7 +1094,7 @@ export function ofVariations<
  */
 export function of<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Types extends { [key in keyof Types]: any }
+  Types extends { [key in keyof Types]: any },
 >(types: Types) {
   type Names = keyof Types;
 
@@ -1131,7 +1127,7 @@ export function omit<
       [key: string]: any;
     };
   },
-  OmittedKeys extends keyof Types
+  OmittedKeys extends keyof Types,
 >(
   union: UnionAPIDef<keyof Types, keyof Types[keyof Types], Types>,
   omittedKeys: OmittedKeys[],
@@ -1174,7 +1170,7 @@ export function pick<
       [key: string]: any;
     };
   },
-  OnlyKeys extends keyof Types
+  OnlyKeys extends keyof Types,
 >(
   union: UnionAPIDef<keyof Types, keyof Types[keyof Types], Types>,
   onlyKeys: OnlyKeys[],
@@ -1226,7 +1222,7 @@ export function merge<
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       [key: string]: any;
     };
-  }
+  },
 >(
   union1: UnionAPIDef<keyof Types1, keyof Types1[keyof Types1], Types1>,
   union2: UnionAPIDef<keyof Types2, keyof Types2[keyof Types2], Types2>,
@@ -1263,7 +1259,7 @@ export function omitVariations<
       [key: string]: any;
     };
   },
-  OmittedVariations extends keyof Types[keyof Types]
+  OmittedVariations extends keyof Types[keyof Types],
 >(
   union: UnionAPIDef<keyof Types, keyof Types[keyof Types], Types>,
   omittedVariations: OmittedVariations[],
