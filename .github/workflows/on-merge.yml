@@ -13,7 +13,7 @@ jobs:
     if: github.event.pull_request.merged == true
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
       with:
         ref: master
         token: ${{ secrets.TOKEN_REPO_WRITE }}
@@ -38,7 +38,7 @@ jobs:
           git checkout -f master
         fi
 
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1.4.6
       with:
         node-verion: '12.x'
 
@@ -75,7 +75,7 @@ jobs:
       )
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
       with:
         ref: master
         token: ${{ secrets.TOKEN_REPO_WRITE }}
@@ -85,7 +85,7 @@ jobs:
         git config user.name "Github actions"
         git config user.email "github-actions@iadvize.com"
 
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1.4.6
       with:
         node-verion: '12.x'
 
@@ -94,7 +94,7 @@ jobs:
 
     - name: Extract version label
       id: extract-version-label
-      uses: actions/github-script@v2
+      uses: actions/github-script@4aed96e0ba636e3df2423e6887c9a83ef8522d6d # v2.1.0
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -167,7 +167,7 @@ jobs:
 
     - name: Create deployment
       id: deployment
-      uses: actions/github-script@v2
+      uses: actions/github-script@4aed96e0ba636e3df2423e6887c9a83ef8522d6d # v2.1.0
       env:
         REF: ${{ steps.push.outputs.ref }}
         VERSION: ${{ steps.push.outputs.VERSION }}
@@ -216,7 +216,7 @@ jobs:
 
     - name: Create Release
       if: steps.extract-version-label.outputs.versionBump != 'beta'
-      uses: actions/github-script@v2
+      uses: actions/github-script@4aed96e0ba636e3df2423e6887c9a83ef8522d6d # v2.1.0
       env:
         VERSION: ${{ steps.push.outputs.version }}
         BODY: ${{ steps.extract-changelog.outputs.version-part }}
