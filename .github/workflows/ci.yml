@@ -13,14 +13,14 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
 
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1.4.6
       with:
         node-verion: '12.x'
 
     - name: Cache npm cache
-      uses: actions/cache@v2
+      uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
       with:
         path: ~/.npm
         key: v1-npm-${{ github.ref }}-${{ hashFiles('package-lock.json') }}
@@ -30,7 +30,7 @@ jobs:
 
     - name: Restore node_modules
       id: node-modules-cache
-      uses: actions/cache@v2
+      uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
       with:
         path: node_modules
         key: v1-node-modules-${{ github.ref }}-${{ hashFiles('package-lock.json') }}
@@ -47,14 +47,14 @@ jobs:
       - install
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
 
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1.4.6
       with:
         node-verion: '12.x'
 
     - name: Restore node_modules
-      uses: actions/cache@v2
+      uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
       id: node-modules-cache
       with:
         path: node_modules
@@ -71,14 +71,14 @@ jobs:
       - install
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
 
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1.4.6
       with:
         node-verion: '12.x'
 
     - name: Restore node_modules
-      uses: actions/cache@v2
+      uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
       id: node-modules-cache
       with:
         path: node_modules
@@ -95,14 +95,14 @@ jobs:
       - install
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
 
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1.4.6
       with:
         node-verion: '12.x'
 
     - name: Restore node_modules
-      uses: actions/cache@v2
+      uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
       id: node-modules-cache
       with:
         path: node_modules
