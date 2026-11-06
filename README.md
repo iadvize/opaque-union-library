@@ -1,3 +1,6 @@
+> [!WARNING]
+> **Archived.** This repository is no longer maintained. The packages already published on npm remain available but will not receive updates.
+
 @iadvize-oss/opaque-union library
 =============================
 ![Continuous integration](https://github.com/iadvize/opaque-union-library/workflows/Continuous%20integration/badge.svg)
